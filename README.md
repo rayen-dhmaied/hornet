@@ -85,7 +85,7 @@ make clean
 
 Removes any binaries generated during the build process.
 
-#### Help
+### Help
 
 ```sh
 make help
