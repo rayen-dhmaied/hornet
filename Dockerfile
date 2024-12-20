@@ -28,5 +28,8 @@ COPY --from=builder ./app ./
 # Expose port 8080
 EXPOSE 8080/tcp
 
+# Set environment variable for Gin
+ENV GIN_MODE=release
+
 # Set the command to run the application
 ENTRYPOINT ["./app"]
