@@ -18,7 +18,7 @@ ENV CGO_ENABLED=0
 RUN go get -d -v .
 
 # Build the Go application
-RUN go build -a -installsuffix cgo -o app ./cmd/${SERVICE}/main.go
+RUN go build -a -installsuffix cgo -o app -ldflags="-s -w" ./cmd/${SERVICE}/main.go
 
 FROM scratch AS runtime
 
