@@ -60,7 +60,6 @@ func (r *PostRepository) FindPostsByAuthorID(ctx context.Context, authorID uuid.
 		return nil, err
 	}
 
-	print(cursor.Next(ctx))
 	defer cursor.Close(ctx)
 
 	var posts []model.Post
