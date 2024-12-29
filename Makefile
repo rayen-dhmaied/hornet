@@ -52,5 +52,5 @@ help:
 	@echo "  make help             Display this help message"
 	@echo
 	@echo "Variables:"
-	@echo "  SERVICE               Specify the service to build (e.g., 'posts', 'reactions', 'users'). Default Value is 'posts'"
+	@echo "  SERVICE               Specify the service to build (e.g., 'posts', 'reactions', 'connections'). Default Value is 'posts'"
 	@echo

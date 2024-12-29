@@ -1,30 +1,39 @@
 # HorNet: Horizon Social Network
 
-HorNet is a microservices-based social network application designed to facilitate user posts, reactions, and user management. Each service is built in Go and deployed with Docker, making it scalable and flexible.
+HorNet is a microservices-based social network application designed to facilitate user posts, reactions, and connectionns management. Each service is built in Go and deployed with Docker, making it scalable and flexible.
 
 ## Project Structure
 
 ```plaintext
 .
 ├── api
-│   ├── openapi
+│   ├── connections # Connections ms implementation
+│   ├── openapi     # Ms API specifications
+│   │   ├── connections.json
 │   │   ├── posts.json
-│   │   ├── reactions.json
-│   │   └── users.json
-│   ├── posts
-│   ├── reactions
-│   └── users
+│   │   └── reactions.json
+│   ├── posts       # Posts ms implementation
+│   └── reactions   # Reactions ms implementation
 ├── cmd
+│   ├── connections
+│   │   └── main.go
 │   ├── posts
-│   ├── reactions
-│   └── users
+│   │   └── main.go
+│   └── reactions
+│       └── main.go
 ├── common
-│   ├── db
-│   ├── logger
-│   └── middleware
+│   └── logger
+│       └── logger.go
 ├── config
+│   ├── connections
+│   │   └── config.go
+│   ├── posts
+│   │   └── config.go
+│   └── reactions
+│       └── config.go
 ├── Dockerfile
 ├── go.mod
+├── go.sum
 ├── Makefile
 └── README.md
 ```
@@ -43,7 +52,7 @@ HorNet is a microservices-based social network application designed to facilitat
 make build SERVICE=<service_name>
 ```
 
-This command builds the binary for the specified service. Replace `<service_name>` with `posts`, `reactions`, or `users`. By default, `SERVICE` is set to `posts`.
+This command builds the binary for the specified service. Replace `<service_name>` with `posts`, `reactions`, or `connections`. By default, `SERVICE` is set to `posts`.
 
 ### Build the Docker Container
 
