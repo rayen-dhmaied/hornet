@@ -44,6 +44,18 @@ func (s *PostService) GetPost(ctx context.Context, postID uuid.UUID) (model.Post
 	return post, nil
 }
 
+// GetPostsByAuthor retrieves all posts by a given author
+func (s *PostService) GetPostsByAuthor(ctx context.Context, authorID uuid.UUID) ([]model.Post, error) {
+
+	// Call the repository to fetch all posts with the given ParentPostID
+	posts, err := s.postRepository.FindPostsByAuthorID(ctx, authorID)
+	if err != nil {
+		return nil, err
+	}
+
+	return posts, nil
+}
+
 // GetReplies retrieves all replies for a given parent post
 func (s *PostService) GetReplies(ctx context.Context, parentPostID uuid.UUID) ([]model.Post, error) {
 	// Call the repository to fetch all posts with the given ParentPostID

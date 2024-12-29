@@ -17,6 +17,9 @@ func Router(postService *service.PostService) *gin.Engine {
 	// Get a post by ID
 	r.GET("/posts/:id", handler.GetPost(postService))
 
+	// Get posts by author ID
+	r.GET("/posts/author/:author_id", handler.GetPostsByAuthor(postService))
+
 	// Get replies for a parent post
 	r.GET("/posts/:id/replies", handler.GetReplies(postService))
 

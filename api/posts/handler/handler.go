@@ -40,19 +40,49 @@ func GetPost(postService *service.PostService) gin.HandlerFunc {
 	}
 }
 
+// GetPostsByAuthor handles the retrieval of posts by an author
+func GetPostsByAuthor(postService *service.PostService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authorIDStr := c.Param("author_id")
+
+		authorID, err := uuid.Parse(authorIDStr)
+		if err != nil {
+			logger.WithContext(c).Error("Invalid author ID ", authorIDStr, " error: ", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid author ID"})
+			return
+		}
+
+		posts, err := postService.GetPostsByAuthor(c.Request.Context(), authorID)
+		if err != nil {
+			logger.WithContext(c).Error("Error retrieving posts for author ", authorID, " error: ", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		if len(posts) == 0 {
+			logger.WithContext(c).Info("No posts found for author ", authorID)
+			c.JSON(http.StatusNotFound, gin.H{"message": "No posts found"})
+			return
+		}
+
+		logger.WithContext(c).Info("Posts retrieved successfully for author ", authorID, " repliesCount: ", len(posts))
+		c.JSON(http.StatusOK, posts)
+	}
+}
+
 // CreatePost handles the creation of a new post
 func CreatePost(postService *service.PostService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req model.CreatePost
 
-		authorID := c.GetHeader("X-User-ID")
-		if authorID == "" {
+		authorIDStr := c.GetHeader("X-User-ID")
+		if authorIDStr == "" {
 			logger.WithContext(c).Warn("Missing X-User-ID header")
 			c.JSON(http.StatusBadRequest, gin.H{"error": "X-User-ID header is required"})
 			return
 		}
 
-		_, err := uuid.Parse(authorID)
+		authorID, err := uuid.Parse(authorIDStr)
 		if err != nil {
 			logger.WithContext(c).Error("Invalid AuthorID ", authorID, " error: ", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid AuthorID"})

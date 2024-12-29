@@ -50,6 +50,27 @@ func (r *PostRepository) FindPostByID(ctx context.Context, id uuid.UUID) (model.
 	return post, nil
 }
 
+// FindPostsByAuthorID retrieves all posts by a given author ID
+func (r *PostRepository) FindPostsByAuthorID(ctx context.Context, authorID uuid.UUID) ([]model.Post, error) {
+	// Filter for finding posts by author ID
+	filter := bson.M{"author_id": authorID}
+
+	cursor, err := r.Collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	print(cursor.Next(ctx))
+	defer cursor.Close(ctx)
+
+	var posts []model.Post
+	if err := cursor.All(ctx, &posts); err != nil {
+		return nil, err
+	}
+
+	return posts, nil
+}
+
 // SavePost saves a new post to the database
 func (r *PostRepository) SavePost(ctx context.Context, post model.Post) error {
 	_, err := r.Collection.InsertOne(ctx, post, options.InsertOne())
