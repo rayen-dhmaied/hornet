@@ -1,6 +1,6 @@
 ARG SERVICE
-RUN if [ -z "${SERVICE}" ] || { [ "${SERVICE}" != "reactions" ] && [ "${SERVICE}" != "posts" ] && [ "${SERVICE}" != "connections" ] } ; then \
-      echo "Error: SERVICE must be 'reactions', 'posts' or 'connections'"; exit 1; \
+RUN if [ -z "${SERVICE}" ] || { [ "${SERVICE}" != "reactions" ] && [ "${SERVICE}" != "posts" ] && [ "${SERVICE}" != "followers" ] } ; then \
+      echo "Error: SERVICE must be 'reactions', 'posts' or 'followers'"; exit 1; \
     fi
 
 FROM golang:1.23.2 AS builder
