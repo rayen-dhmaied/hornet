@@ -1,6 +1,7 @@
 ARG SERVICE
-RUN if [ -z "${SERVICE}" ] || { [ "${SERVICE}" != "reactions" ] && [ "${SERVICE}" != "posts" ] && [ "${SERVICE}" != "followers" ] } ; then \
-      echo "Error: SERVICE must be 'reactions', 'posts' or 'followers'"; exit 1; \
+ARG PORT
+RUN if [ -z "${SERVICE}" ] || { [ "${SERVICE}" != "posts" ] && [ "${SERVICE}" != "followers" ] } ; then \
+      echo "Error: SERVICE must be 'posts' or 'followers'"; exit 1; \
     fi
 
 FROM golang:1.23.2 AS builder
@@ -25,8 +26,8 @@ FROM scratch AS runtime
 # Copy the compiled binary from the builder stage to the runtime image
 COPY --from=builder ./app ./
 
-# Expose port 8080
-EXPOSE 8080/tcp
+# Expose port
+EXPOSE ${PORT}/tcp
 
 # Set environment variable for Gin
 ENV GIN_MODE=release

@@ -23,7 +23,7 @@ func LoadConfig() *Config {
 	// Read variables from the environment
 	neo4jURI := os.Getenv("NEO4J_URI")
 	dbName := os.Getenv("NEO4J_DB")
-	serverPort := os.Getenv("SERVER_PORT")
+	serverPort := os.Getenv("FOLLOWERS_PORT")
 
 	// Validate required variables
 	if neo4jURI == "" || dbName == "" {

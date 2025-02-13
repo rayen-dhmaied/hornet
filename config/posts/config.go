@@ -23,7 +23,7 @@ func LoadConfig() *Config {
 	// Read variables from the environment
 	mongoURI := os.Getenv("MONGO_URI")
 	dbName := os.Getenv("MONGO_DB")
-	serverPort := os.Getenv("SERVER_PORT")
+	serverPort := os.Getenv("POSTS_PORT")
 
 	// Validate required variables
 	if mongoURI == "" || dbName == "" {
