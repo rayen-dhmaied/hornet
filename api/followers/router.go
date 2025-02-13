@@ -20,7 +20,14 @@ func Router(followersService *service.FollowersService) *gin.Engine {
 	// Get user followers
 	r.GET("/followers/user/:user_id/followers", handler.GetUserFollowers(followersService))
 
+	// Get user following
 	r.GET("/followers/user/:user_id/following", handler.GetUserFollowing(followersService))
+
+	// Get user followers count
+	r.GET("/followers/user/:user_id/followers/count", handler.GetFollowersCount(followersService))
+
+	// Get user following count
+	r.GET("/followers/user/:user_id/following/count", handler.GetFollowingCount(followersService))
 
 	return r
 }

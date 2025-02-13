@@ -191,3 +191,75 @@ func (r *FollowersRepository) GetFollowing(ctx context.Context, userID uuid.UUID
 	}
 	return following, nil
 }
+
+// GetFollowersCount retrieves the count of followers for a given user ID.
+func (r *FollowersRepository) GetFollowersCount(ctx context.Context, userID uuid.UUID) (int, error) {
+	session := r.driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
+	defer session.Close(ctx)
+
+	var count int
+	_, err := session.ExecuteRead(ctx, func(tx neo4j.ManagedTransaction) (interface{}, error) {
+		query := `
+			MATCH (:User {id: $userID})<-[f:FOLLOW]-(:User)
+			RETURN count(f) AS count
+		`
+		params := map[string]interface{}{
+			"userID": userID.String(),
+		}
+		result, err := tx.Run(ctx, query, params)
+		if err != nil {
+			return nil, err
+		}
+
+		if result.Next(ctx) {
+			record := result.Record()
+			countVal, ok := record.Get("count")
+			if !ok {
+				return nil, nil
+			}
+			count = int(countVal.(int64))
+		}
+		return nil, nil
+	})
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+// GetFollowingCount retrieves the count of users a given user is following.
+func (r *FollowersRepository) GetFollowingCount(ctx context.Context, userID uuid.UUID) (int, error) {
+	session := r.driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
+	defer session.Close(ctx)
+
+	var count int
+	_, err := session.ExecuteRead(ctx, func(tx neo4j.ManagedTransaction) (interface{}, error) {
+		query := `
+			MATCH (:User {id: $userID})-[f:FOLLOW]->(:User)
+			RETURN count(f) AS count
+		`
+		params := map[string]interface{}{
+			"userID": userID.String(),
+		}
+		result, err := tx.Run(ctx, query, params)
+		if err != nil {
+			return nil, err
+		}
+
+		if result.Next(ctx) {
+			record := result.Record()
+			countVal, ok := record.Get("count")
+			if !ok {
+				return nil, nil
+			}
+			count = int(countVal.(int64))
+		}
+		return nil, nil
+	})
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}

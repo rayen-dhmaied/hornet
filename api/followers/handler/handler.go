@@ -137,3 +137,49 @@ func GetUserFollowing(service *service.FollowersService) gin.HandlerFunc {
 		c.JSON(http.StatusOK, following)
 	}
 }
+
+// GetFollowersCount gets the count of followers for a user.
+func GetFollowersCount(service *service.FollowersService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userIDStr := c.Param("user_id")
+		userID, err := uuid.Parse(userIDStr)
+		if err != nil {
+			logger.WithContext(c).Error("Invalid userID ", userIDStr, " error: ", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UserID"})
+			return
+		}
+
+		count, err := service.GetFollowersCount(c.Request.Context(), userID)
+		if err != nil {
+			logger.WithContext(c).Error("Error fetching followers count ", "error: ", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		logger.WithContext(c).Info("Followers count fetched successfully for user ", userID)
+		c.JSON(http.StatusOK, gin.H{"count": count})
+	}
+}
+
+// GetUserFollowingCount gets the count of users the given user is following.
+func GetFollowingCount(service *service.FollowersService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userIDStr := c.Param("user_id")
+		userID, err := uuid.Parse(userIDStr)
+		if err != nil {
+			logger.WithContext(c).Error("Invalid userID ", userIDStr, " error: ", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UserID"})
+			return
+		}
+
+		count, err := service.GetFollowingCount(c.Request.Context(), userID)
+		if err != nil {
+			logger.WithContext(c).Error("Error fetching following count ", "error: ", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		logger.WithContext(c).Info("Following count fetched successfully for user ", userID)
+		c.JSON(http.StatusOK, gin.H{"count": count})
+	}
+}

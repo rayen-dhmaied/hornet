@@ -97,3 +97,31 @@ func (s *FollowersService) GetFollowing(ctx context.Context, userID uuid.UUID) (
 
 	return following, nil
 }
+
+// GetFollowersCount retrieves the number of followers for a specific user.
+func (s *FollowersService) GetFollowersCount(ctx context.Context, userID uuid.UUID) (int, error) {
+	if userID == uuid.Nil {
+		return 0, fmt.Errorf("userID cannot be nil")
+	}
+
+	count, err := s.followersRepository.GetFollowersCount(ctx, userID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get followers count for user with ID %s: %w", userID, err)
+	}
+
+	return count, nil
+}
+
+// GetFollowingCount retrieves the number of users a specific user is following.
+func (s *FollowersService) GetFollowingCount(ctx context.Context, userID uuid.UUID) (int, error) {
+	if userID == uuid.Nil {
+		return 0, fmt.Errorf("userID cannot be nil")
+	}
+
+	count, err := s.followersRepository.GetFollowingCount(ctx, userID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get following count for user with ID %s: %w", userID, err)
+	}
+
+	return count, nil
+}
