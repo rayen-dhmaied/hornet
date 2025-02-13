@@ -123,6 +123,6 @@ Displays help information for all available `make` commands and variables.
 | `POSTS_PORT`               | The port on which the posts server runs    | `8080`        | No       |
 | `FOLLOWERS_PORT`               | The port on which the followers server runs    | `8080`        | No       |
 | `MONGO_URI`       | URI for the MongoDB database      | -             | Yes      |
-| `MONGO_DB`       | The name the MongoDB database      | `hornet`             | Yes      |
+| `MONGO_DB`       | The name the MongoDB database      | -             | Yes      |
 | `NEO4J_URI`           | URI for the Neo4j database | - | Yes       |
-| `NEO4J_DB`           | The name of Neo4j database | `neo4j` | No       |
+| `NEO4J_DB`           | The name of Neo4j database | `neo4j` | Yes       |
