@@ -1,7 +1,5 @@
-ARG SERVICE
-ARG PORT
-
 FROM golang:1.23.2 AS builder
+ARG SERVICE
 
 # Set the working directory
 WORKDIR /app
@@ -13,10 +11,10 @@ COPY . .
 ENV CGO_ENABLED=0
 
 # Download dependencies specified in the go.mod file
-RUN go get -d -v .
+RUN go mod download
 
 # Build the Go application
-RUN go build -a -installsuffix cgo -o app -ldflags="-s -w" ./cmd/${SERVICE}/main.go
+RUN go build -o app -ldflags="-s -w" ./cmd/${SERVICE}/main.go
 
 FROM gcr.io/distroless/static-debian12 AS runtime
 ARG PORT
