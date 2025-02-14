@@ -2,17 +2,23 @@ name: Build and Push to GHCR
 
 on:
   push:
-    branches: ['main']
+    branches:
+      - main
     paths:
       - '**.go'
       - 'Dockerfile'
-      - 'api/**'
-      - 'cmd/**'
+      - 'api/followers/**'
+      - 'api/posts/**'
       - 'common/**'
       - 'config/**'
       - 'go.mod'
       - 'go.sum'
-    
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: hornet
+
 jobs:
   build:
     name: Build and Push Docker Images
@@ -21,58 +27,49 @@ jobs:
       contents: read
       packages: write
 
+    strategy:
+      matrix:
+        service: [posts, followers]
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Determine Modified Services
-        id: check_changes
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.23.2
+
+      - name: Cache Go Modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
+
+      - name: Build Docker Image
         run: |
-          echo "Checking for modified services based on paths..."
-          
-          # Check if github.event.before is a valid commit
-          if git cat-file -e ${{ github.event.before }}^{commit} 2>/dev/null; then
-            echo "Valid commit detected for comparison."
-            paths=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
-          else
-            echo "No valid commit detected (likely first push to branch). Using git diff from the last commit."
-            paths=$(git diff --name-only HEAD~1 HEAD)
-          fi
-
-          modified_services=""
-          for path in $paths; do
-            if [[ $path =~ ^api/([^/]+)/ || $path =~ ^cmd/([^/]+)/ || $path =~ ^config/([^/]+)/ ]]; then
-              service=${BASH_REMATCH[1]}
-              if [[ ! $modified_services =~ $service ]]; then
-                modified_services="$modified_services $service"
-              fi
-            fi
-          done
-
-          if [ -z "$modified_services" ]; then
-            echo "No relevant service changes detected."
-            echo "modified_service=none" >> $GITHUB_ENV
-          else
-            echo "Modified services: $modified_services"
-            echo "modified_service=$modified_services" >> $GITHUB_ENV
+          echo "Building Docker image for service: ${{ matrix.service }}"
+          docker build \
+            --build-arg SERVICE=${{ matrix.service }} \
+            --build-arg PORT=8080 \
+            -t ${{ env.REGISTRY }}/${{ github.repository }}:${{ matrix.service }}-${{ github.sha }} .
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and Push Docker Images
-        if: env.modified_service != 'none'
+      - name: Push Docker Image
         run: |
-          for service in $modified_service; do
-            echo "Building and pushing Docker image for $service"
-            docker build \
-              --build-arg SERVICE=$service \
-              --build-arg PORT=8080 \
-              -t ghcr.io/${{ github.repository }}:$service-${{ github.sha }} .
-            docker tag ghcr.io/${{ github.repository }}:$service-${{ github.sha }} ghcr.io/${{ github.repository }}:$service-latest
-            docker push ghcr.io/${{ github.repository }}:$service-${{ github.sha }}
-            docker push ghcr.io/${{ github.repository }}:$service-latest
-          done
+          echo "Pushing Docker image for service: ${{ matrix.service }}"
+          docker push ${{ env.REGISTRY }}/${{ github.repository }}:${{ matrix.service }}-${{ github.sha }}
+
+      - name: Tag and Push Latest
+        if: github.ref == 'refs/heads/main'
+        run: |
+          docker tag ${{ env.REGISTRY }}/${{ github.repository }}:${{ matrix.service }}-${{ github.sha }} ${{ env.REGISTRY }}/${{ github.repository }}:${{ matrix.service }}-latest
+          docker push ${{ env.REGISTRY }}/${{ github.repository }}:${{ matrix.service }}-latest
