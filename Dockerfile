@@ -1,8 +1,5 @@
 ARG SERVICE
 ARG PORT
-RUN if [ -z "${SERVICE}" ] || { [ "${SERVICE}" != "posts" ] && [ "${SERVICE}" != "followers" ] } ; then \
-      echo "Error: SERVICE must be 'posts' or 'followers'"; exit 1; \
-    fi
 
 FROM golang:1.23.2 AS builder
 

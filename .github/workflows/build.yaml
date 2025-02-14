@@ -3,7 +3,7 @@ name: Build and Push to GHCR
 on:
   push:
     branches:
-    - main
+      - main
     paths:
       - '**.go'
       - 'Dockerfile'
@@ -17,7 +17,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  REPO_NAME: hornet
+  PORT: 8080
 
 jobs:
   build:
@@ -32,13 +32,15 @@ jobs:
         service: [posts, followers]
         include:
           - service: posts
+            image_name: hornet-posts
           - service: followers
+            image_name: hornet-followers
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Ensure full history is available for commit comparison
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v4
@@ -62,8 +64,8 @@ jobs:
           echo "Building Docker image for service: ${{ matrix.service }}"
           docker build \
             --build-arg SERVICE=${{ matrix.service }} \
-            --build-arg PORT=8080 \
-            -t ${{ env.REGISTRY }}/${{ env.REPO_NAME }}:${{ matrix.service }}-${{ env.timestamp }} .
+            --build-arg PORT=${{ env.PORT }} \
+            -t ${{ env.REGISTRY }}/${{ matrix.image_name }}:${{ env.timestamp }} .
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
@@ -75,10 +77,10 @@ jobs:
       - name: Push Docker Image
         run: |
           echo "Pushing Docker image for service: ${{ matrix.service }}"
-          docker push ${{ env.REGISTRY }}/${{ env.REPO_NAME }}:${{ matrix.service }}-${{ env.timestamp }}
+          docker push ${{ env.REGISTRY }}/${{ matrix.image_name }}:${{ env.timestamp }}
 
       - name: Tag and Push Latest
         if: github.ref == 'refs/heads/main'
         run: |
-          docker tag ${{ env.REGISTRY }}/${{ env.REPO_NAME }}:${{ matrix.service }}-${{ env.timestamp }} ${{ env.REGISTRY }}/${{ env.REPO_NAME }}:${{ matrix.service }}-latest
-          docker push ${{ env.REGISTRY }}/${{ env.REPO_NAME }}:${{ matrix.service }}-latest
+          docker tag ${{ env.REGISTRY }}/${{ matrix.image_name }}:${{ env.timestamp }} ${{ env.REGISTRY }}/${{ matrix.image_name }}:latest
+          docker push ${{ env.REGISTRY }}/${{ matrix.image_name }}:latest
