@@ -126,3 +126,5 @@ Displays help information for all available `make` commands and variables.
 | `MONGO_DB`       | The name the MongoDB database      | -             | Yes      |
 | `NEO4J_URI`           | URI for the Neo4j database | - | Yes       |
 | `NEO4J_DB`           | The name of Neo4j database | `neo4j` | Yes       |
+| `NEO4J_USER`           | User for the Neo4j database | - | Yes       |
+| `NEO4J_PASSWORD`           | The password of Neo4j database | - | Yes       |
