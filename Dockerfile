@@ -21,7 +21,7 @@ RUN go get -d -v .
 # Build the Go application
 RUN go build -a -installsuffix cgo -o app -ldflags="-s -w" ./cmd/${SERVICE}/main.go
 
-FROM scratch AS runtime
+FROM gcr.io/distroless/static-debian12 AS runtime
 
 # Copy the compiled binary from the builder stage to the runtime image
 COPY --from=builder ./app ./
