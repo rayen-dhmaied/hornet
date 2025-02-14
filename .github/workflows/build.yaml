@@ -29,8 +29,17 @@ jobs:
         id: check_changes
         run: |
           echo "Checking for modified services based on paths..."
+          
+          # Check if github.event.before is a valid commit
+          if git cat-file -e ${{ github.event.before }}^{commit} 2>/dev/null; then
+            echo "Valid commit detected for comparison."
+            paths=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
+          else
+            echo "No valid commit detected (likely first push to branch). Using git diff from the last commit."
+            paths=$(git diff --name-only HEAD~1 HEAD)
+          fi
+
           modified_services=""
-          paths=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
           for path in $paths; do
             if [[ $path =~ ^api/([^/]+)/ || $path =~ ^cmd/([^/]+)/ || $path =~ ^config/([^/]+)/ ]]; then
               service=${BASH_REMATCH[1]}
