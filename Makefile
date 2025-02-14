@@ -14,7 +14,7 @@ build:
 .PHONY: build-container
 build-container:
 	@echo "Building Docker container for $(SERVICE)..."
-	@docker build --build-arg SERVICE=$(SERVICE) PORT=${PORT} -t $(DOCKER_IMAGE) .
+	@docker build --build-arg SERVICE=$(SERVICE) --build-arg PORT=${PORT} -t $(DOCKER_IMAGE) .
 
 # Run the binary directly
 .PHONY: run
