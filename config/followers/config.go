@@ -1,4 +1,4 @@
-package posts
+package followers
 
 import (
 	"log"
@@ -8,7 +8,7 @@ import (
 )
 
 type Config struct {
-	MongoURI   string
+	Neo4jURI   string
 	DBName     string
 	ServerPort string
 }
@@ -21,12 +21,12 @@ func LoadConfig() *Config {
 	}
 
 	// Read variables from the environment
-	mongoURI := os.Getenv("MONGO_URI")
-	dbName := os.Getenv("MONGO_DB")
-	serverPort := os.Getenv("POSTS_PORT")
+	neo4jURI := os.Getenv("NEO4J_URI")
+	dbName := os.Getenv("NEO4J_DB")
+	serverPort := os.Getenv("FOLLOWERS_PORT")
 
 	// Validate required variables
-	if mongoURI == "" || dbName == "" {
+	if neo4jURI == "" || dbName == "" {
 		log.Fatalf("Environment variables MONGO_URI, MONGO_DB, and must be set.")
 	}
 
@@ -36,7 +36,7 @@ func LoadConfig() *Config {
 	}
 
 	return &Config{
-		MongoURI:   mongoURI,
+		Neo4jURI:   neo4jURI,
 		DBName:     dbName,
 		ServerPort: serverPort,
 	}

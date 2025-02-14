@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"hornet/api/posts"
-	"hornet/api/posts/repository"
-	"hornet/api/posts/service"
-	config "hornet/config/posts"
+	"hornet/api/followers"
+	"hornet/api/followers/repository"
+	"hornet/api/followers/service"
+	config "hornet/config/followers"
 	"log"
 	"net/http"
 	"os"
@@ -14,8 +14,7 @@ import (
 	"syscall"
 	"time"
 
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 )
 
 func main() {
@@ -29,16 +28,19 @@ func main() {
 	// Gracefully handle shutdown signals (e.g., Ctrl+C)
 	go handleShutdown(cancel)
 
-	// Set up MongoDB client and defer disconnect
-	client, db := setupMongoClient(ctx, cfg.MongoURI, cfg.DBName)
-	defer client.Disconnect(ctx)
+	// Set up Neo4j driver and defer disconnect
+	driver, err := SetupNeo4jDriver(ctx, cfg.Neo4jURI, "neo4j", "neo4j")
+	if err != nil {
+		log.Fatalf("Failed to set up Neo4j client: %v", err)
+	}
+	defer driver.Close(ctx)
 
 	// Initialize repository and service layers
-	postRepository := repository.NewPostRepository(db)
-	postService := service.NewPostService(postRepository)
+	followersRepository := repository.NewFollowersRepository(driver)
+	followersService := service.NewFollowersService(followersRepository)
 
 	// Set up router with service
-	r := posts.Router(postService)
+	r := followers.Router(followersService)
 
 	// Start the Gin server
 	server := startServer(r, cfg.ServerPort)
@@ -59,20 +61,19 @@ func handleShutdown(cancel context.CancelFunc) {
 	cancel() // Cancel the context to initiate shutdown
 }
 
-// setupMongoClient initializes and returns a MongoDB client and the database.
-func setupMongoClient(ctx context.Context, uri, dbName string) (*mongo.Client, *mongo.Database) {
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
+// SetupNeo4jDriver creates and returns a Neo4j driver instance.
+func SetupNeo4jDriver(ctx context.Context, uri, username, password string) (neo4j.DriverWithContext, error) {
+	// Create a new driver with context.
+	driver, err := neo4j.NewDriverWithContext(uri, neo4j.BasicAuth(username, password, ""))
 	if err != nil {
-		log.Fatalf("Failed to connect to MongoDB: %v", err)
+		return nil, err
 	}
 
-	// Ping the database to verify connection
-	if err := client.Ping(ctx, nil); err != nil {
-		log.Fatalf("Failed to ping MongoDB: %v", err)
+	// Verify connectivity using the provided context.
+	if err := driver.VerifyConnectivity(ctx); err != nil {
+		return nil, err
 	}
-
-	log.Println("Successfully connected to MongoDB")
-	return client, client.Database(dbName)
+	return driver, nil
 }
 
 // startServer starts the HTTP server in a goroutine.

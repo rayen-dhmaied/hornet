@@ -1,5 +1,6 @@
 # Variables
 SERVICE ?= posts
+PORT ?= 8080
 BINARY = $(SERVICE)
 DOCKER_IMAGE = hornet/$(SERVICE):latest
 
@@ -13,7 +14,7 @@ build:
 .PHONY: build-container
 build-container:
 	@echo "Building Docker container for $(SERVICE)..."
-	@docker build --build-arg SERVICE=$(SERVICE) -t $(DOCKER_IMAGE) .
+	@docker build --build-arg SERVICE=$(SERVICE) PORT=${PORT} -t $(DOCKER_IMAGE) .
 
 # Run the binary directly
 .PHONY: run
@@ -52,5 +53,6 @@ help:
 	@echo "  make help             Display this help message"
 	@echo
 	@echo "Variables:"
-	@echo "  SERVICE               Specify the service to build (e.g., 'posts', 'reactions', 'users'). Default Value is 'posts'"
+	@echo "  SERVICE               Specify the service to build (e.g., 'posts', 'followers'). Default Value is 'posts'"
+	@echo "  PORT              	   Specify the port for the service. Default Value is '8080'"
 	@echo
