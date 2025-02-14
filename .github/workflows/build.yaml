@@ -1,0 +1,69 @@
+name: Build and Push to GHCR
+
+on:
+  push:
+    branches: ['main']
+    paths:
+      - '**.go'
+      - 'Dockerfile'
+      - 'api/**'
+      - 'cmd/**'
+      - 'common/**'
+      - 'config/**'
+      - 'go.mod'
+      - 'go.sum'
+    
+jobs:
+  build:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Determine Modified Services
+        id: check_changes
+        run: |
+          echo "Checking for modified services based on paths..."
+          modified_services=""
+          paths=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
+          for path in $paths; do
+            if [[ $path =~ ^api/([^/]+)/ || $path =~ ^cmd/([^/]+)/ || $path =~ ^config/([^/]+)/ ]]; then
+              service=${BASH_REMATCH[1]}
+              if [[ ! $modified_services =~ $service ]]; then
+                modified_services="$modified_services $service"
+              fi
+            fi
+          done
+
+          if [ -z "$modified_services" ]; then
+            echo "No relevant service changes detected."
+            echo "modified_service=none" >> $GITHUB_ENV
+          else
+            echo "Modified services: $modified_services"
+            echo "modified_service=$modified_services" >> $GITHUB_ENV
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Docker Images
+        if: env.modified_service != 'none'
+        run: |
+          for service in $modified_service; do
+            echo "Building and pushing Docker image for $service"
+            docker build \
+              --build-arg SERVICE=$service \
+              --build-arg PORT=8080 \
+              -t ghcr.io/${{ github.repository }}:$service-${{ github.sha }} .
+            docker tag ghcr.io/${{ github.repository }}:$service-${{ github.sha }} ghcr.io/${{ github.repository }}:$service-latest
+            docker push ghcr.io/${{ github.repository }}:$service-${{ github.sha }}
+            docker push ghcr.io/${{ github.repository }}:$service-latest
+          done
