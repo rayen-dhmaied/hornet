@@ -30,11 +30,6 @@ jobs:
     strategy:
       matrix:
         service: [posts, followers]
-        include:
-          - service: posts
-            image_name: hornet-posts
-          - service: followers
-            image_name: hornet-followers
 
     steps:
       - name: Checkout Code
@@ -62,10 +57,14 @@ jobs:
       - name: Build Docker Image
         run: |
           echo "Building Docker image for service: ${{ matrix.service }}"
+          ORG_NAME=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          REPO_NAME=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME="${{ env.REGISTRY }}/${ORG_NAME}/${REPO_NAME}:${{ matrix.service }}-${{ env.timestamp }}"
           docker build \
             --build-arg SERVICE=${{ matrix.service }} \
             --build-arg PORT=${{ env.PORT }} \
-            -t ${{ env.REGISTRY }}/${{ matrix.image_name }}:${{ env.timestamp }} .
+            -t $IMAGE_NAME .
+          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
@@ -74,13 +73,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push Docker Image
+      - name: Push Docker Image with Timestamp
         run: |
           echo "Pushing Docker image for service: ${{ matrix.service }}"
-          docker push ${{ env.REGISTRY }}/${{ matrix.image_name }}:${{ env.timestamp }}
+          docker push ${{ env.IMAGE_NAME }}
 
       - name: Tag and Push Latest
         if: github.ref == 'refs/heads/main'
         run: |
-          docker tag ${{ env.REGISTRY }}/${{ matrix.image_name }}:${{ env.timestamp }} ${{ env.REGISTRY }}/${{ matrix.image_name }}:latest
-          docker push ${{ env.REGISTRY }}/${{ matrix.image_name }}:latest
+          echo "Tagging and pushing latest version for service: ${{ matrix.service }}"
+          ORG_NAME=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          REPO_NAME=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+          LATEST_TAG="${{ env.REGISTRY }}/${ORG_NAME}/${REPO_NAME}:${{ matrix.service }}-latest"
+          docker tag ${{ env.IMAGE_NAME }} $LATEST_TAG
+          docker push $LATEST_TAG
