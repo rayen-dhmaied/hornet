@@ -29,7 +29,7 @@ func main() {
 	go handleShutdown(cancel)
 
 	// Set up Neo4j driver and defer disconnect
-	driver, err := SetupNeo4jDriver(ctx, cfg.Neo4jURI, "neo4j", "neo4j")
+	driver, err := SetupNeo4jDriver(ctx, cfg.Neo4jURI, cfg.User, cfg.Password)
 	if err != nil {
 		log.Fatalf("Failed to set up Neo4j client: %v", err)
 	}

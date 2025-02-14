@@ -10,6 +10,8 @@ import (
 type Config struct {
 	Neo4jURI   string
 	DBName     string
+	User       string
+	Password   string
 	ServerPort string
 }
 
@@ -24,10 +26,12 @@ func LoadConfig() *Config {
 	neo4jURI := os.Getenv("NEO4J_URI")
 	dbName := os.Getenv("NEO4J_DB")
 	serverPort := os.Getenv("FOLLOWERS_PORT")
+	user := os.Getenv("NEO4J_USER")
+	password := os.Getenv("NEO4J_PASSWORD")
 
 	// Validate required variables
-	if neo4jURI == "" || dbName == "" {
-		log.Fatalf("Environment variables MONGO_URI, MONGO_DB, and must be set.")
+	if neo4jURI == "" || dbName == "" || user == "" || password == "" {
+		log.Fatalf("Environment variables NEO4J_URI, NEO4J_DB, NEO4J_USER and NEO4J_PASSWORD must be set.")
 	}
 
 	// Use default port if not set
@@ -39,5 +43,7 @@ func LoadConfig() *Config {
 		Neo4jURI:   neo4jURI,
 		DBName:     dbName,
 		ServerPort: serverPort,
+		User:       user,
+		Password:   password,
 	}
 }
