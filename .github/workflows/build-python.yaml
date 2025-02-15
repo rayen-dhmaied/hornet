@@ -1,0 +1,66 @@
+name: Build and Push to GHCR
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'feed/**'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  PORT: 8080
+
+jobs:
+  build:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      matrix:
+        service: [feed]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Get Current Timestamp
+        id: timestamp
+        run: echo "timestamp=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+
+      - name: Build Docker Image
+        run: |
+          echo "Building Docker image for service: ${{ matrix.service }}"
+          ORG_NAME=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          REPO_NAME=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME="${{ env.REGISTRY }}/${ORG_NAME}/${REPO_NAME}:${{ matrix.service }}-${{ env.timestamp }}"
+          docker build  -t $IMAGE_NAME feed/
+          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push Docker Image with Timestamp
+        run: |
+          echo "Pushing Docker image for service: ${{ matrix.service }}"
+          docker push ${{ env.IMAGE_NAME }}
+
+      - name: Tag and Push Latest
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "Tagging and pushing latest version for service: ${{ matrix.service }}"
+          ORG_NAME=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          REPO_NAME=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+          LATEST_TAG="${{ env.REGISTRY }}/${ORG_NAME}/${REPO_NAME}:${{ matrix.service }}-latest"
+          docker tag ${{ env.IMAGE_NAME }} $LATEST_TAG
+          docker push $LATEST_TAG
