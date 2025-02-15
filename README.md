@@ -128,3 +128,6 @@ Displays help information for all available `make` commands and variables.
 | `NEO4J_DB`           | The name of Neo4j database | `neo4j` | Yes       |
 | `NEO4J_USER`           | User for the Neo4j database | - | Yes       |
 | `NEO4J_PASSWORD`           | The password of Neo4j database | - | Yes       |
+| `FOLLOWERS_SERVICE_URL`           | Followers service url | `- | Yes       |
+| `POSTS_SERVICE_URL`           | Posts service url | `- | Yes       |
+| `FLASK_PORT`           | Flask app port | - | No       |
