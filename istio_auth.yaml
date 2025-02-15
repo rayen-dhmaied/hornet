@@ -1,0 +1,126 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "rayen.horizon-workspaces.com"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: vs
+spec:
+  hosts:
+    - "rayen.horizon-workspaces.com"
+  gateways:
+    - gateway
+  http:
+    - match:
+        - uri:
+            prefix: "/followers"
+      corsPolicy:
+        allowOrigins:
+          - regex: ".*"  # This allows requests from any origin
+        allowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        allowHeaders:
+          - "*"
+        exposeHeaders:
+          - "*"
+        maxAge: "24h"
+        allowCredentials: true
+      route:
+        - destination:
+            host: hornet-followers.common.svc.cluster.local
+            port:
+              number: 8080
+    - match:
+        - uri:
+            prefix: "/posts"
+      corsPolicy:
+        allowOrigins:
+          - regex: ".*"  # This allows requests from any origin
+        allowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        allowHeaders:
+          - "*"
+        exposeHeaders:
+          - "*"
+        maxAge: "24h"
+        allowCredentials: true
+      route:
+        - destination:
+            host: hornet-posts.common.svc.cluster.local
+            port:
+              number: 8080
+    - match:
+        - uri:
+            prefix: "/feed"
+      corsPolicy:
+        allowOrigins:
+          - regex: ".*"  # This allows requests from any origin
+        allowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        allowHeaders:
+          - "*"
+        exposeHeaders:
+          - "*"
+        maxAge: "24h"
+        allowCredentials: true
+      route:
+        - destination:
+            host: hornet-feed.common.svc.cluster.local
+            port:
+              number: 8080
+---
+
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: jwt-check
+spec:
+  selector:
+    matchLabels:
+      main-app: hornet
+  jwtRules:
+    - issuer: "http://khalil.horizon-workspaces.com/realms/hornet" 
+      jwksUri: "http://khalil.horizon-workspaces.com/realms/hornet/protocol/openid-connect/certs"
+      outputClaimToHeaders:
+      - header: X-User-ID
+        claim: sub
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: user-check
+spec:
+  selector:
+    matchLabels:
+      main-app: hornet
+  rules:
+    - from:
+        - source:
+           namespaces: ["common"]
+    - from:
+        - source:
+            requestPrincipals: ["*"]
