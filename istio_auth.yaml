@@ -11,7 +11,7 @@ spec:
         name: http
         protocol: HTTP
       hosts:
-        - "rayen.horizon-workspaces.com"
+        - "hornet.horizon-workspaces.com"
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
@@ -19,7 +19,7 @@ metadata:
   name: vs
 spec:
   hosts:
-    - "rayen.horizon-workspaces.com"
+    - "hornet.horizon-workspaces.com"
   gateways:
     - gateway
   http:
@@ -103,8 +103,8 @@ spec:
     matchLabels:
       main-app: hornet
   jwtRules:
-    - issuer: "http://khalil.horizon-workspaces.com/realms/hornet" 
-      jwksUri: "http://khalil.horizon-workspaces.com/realms/hornet/protocol/openid-connect/certs"
+    - issuer: "http://keycloak.horizon-workspaces.com/realms/hornet" 
+      jwksUri: "http://keycloak.horizon-workspaces.com/realms/hornet/protocol/openid-connect/certs"
       outputClaimToHeaders:
       - header: X-User-ID
         claim: sub
