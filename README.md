@@ -1,133 +1,165 @@
 # HorNet: Horizon Social Network
 
-HorNet is a microservices-based social network application designed to facilitate user posts, and followers management. Each service is built in Go and deployed with Docker, making it scalable and flexible.
+Microservices-based social network built with Go, featuring posts management and follower relationships. Deployed with Docker and Kubernetes using Istio service mesh.
+
+## Architecture
+
+- **Posts Service** - User posts management (MongoDB)
+- **Followers Service** - Follower relationships and social graph (Neo4j)
+- **Clean Architecture** - Handler → Service → Repository pattern
+- **Service Mesh** - Istio with mTLS and Keycloak authentication
 
 ## Project Structure
 
-```plaintext
+```
 .
-├── api
-│   ├── followers
-│   │   ├── handler
-│   │   │   └── handler.go
-│   │   ├── model
-│   │   │   └── model.go
-│   │   ├── repository
-│   │   │   └── repository.go
-│   │   ├── router.go
-│   │   └── service
-│   │       └── service.go
-│   ├── openapi
-│   │   ├── followers.json
-│   │   └── posts.json
-│   └── posts
-│       ├── handler
-│       │   └── handler.go
-│       ├── model
-│       │   └── model.go
-│       ├── repository
-│       │   └── repository.go
-│       ├── router.go
-│       └── service
-│           └── service.go
-├── cmd
-│   ├── followers
-│   │   └── main.go
-│   └── posts
-│       └── main.go
-├── common
-│   └── logger
-│       └── logger.go
-├── config
-│   ├── followers
-│   │   └── config.go
-│   └── posts
-│       └── config.go
-├── Dockerfile
-├── go.mod
-├── go.sum
-├── Makefile
-└── README.md
+├── api/                    # API layer
+│   ├── followers/          # Followers service endpoints
+│   │   ├── handler/        # HTTP handlers
+│   │   ├── model/          # Data models
+│   │   ├── repository/     # Database layer
+│   │   ├── service/        # Business logic
+│   │   └── router.go       # Route definitions
+│   ├── posts/              # Posts service endpoints
+│   │   └── (same structure)
+│   └── openapi/            # OpenAPI specifications
+├── cmd/                    # Service entry points
+│   ├── followers/main.go   # Followers service
+│   └── posts/main.go       # Posts service
+├── common/                 # Shared utilities
+│   └── logger/             # Logging package
+├── config/                 # Configuration per service
+├── Dockerfile              # Multi-stage build
+└── Makefile                # Build automation
 ```
 
-## Prerequisites
+## Quick Start
 
-- **Go**: Make sure you have Go installed (version 1.23.2 or later).
-- **Docker**: Required to build and run Docker containers.
-- **GolangCI-Lint**: Recommended for linting the Go code.
+### Prerequisites
 
-## Usage
+- Go 1.23.2+
+- Docker
+- MongoDB (for Posts Service)
+- Neo4j (for Followers Service)
 
-### Build the Binary
+### Build & Run
 
-```sh
-make build SERVICE=<service_name>
-```
+```bash
+# Build service binary
+make build SERVICE=posts
 
-This command builds the binary for the specified service. Replace `<service_name>` with `posts`, or `followers`. By default, `SERVICE` is set to `posts`.
+# Build Docker image
+make build-container SERVICE=posts PORT=8080
 
-### Build the Docker Container
+# Run locally
+make run SERVICE=posts
 
-```sh
-make build-container SERVICE=<service_name> PORT=<service_port>
-```
-
-Builds a Docker image for the specified service. Make sure Docker is running.
-
-### Run the Binary Directly
-
-```sh
-make run SERVICE=<service_name>
-```
-
-Runs the binary directly, which is useful for local testing outside of Docker.
-
-### Lint the Code
-
-```sh
+# Code quality
 make lint
-```
-
-Checks the code for linting errors. This requires `golangci-lint` to be installed.
-
-### Format the Code
-
-```sh
 make fmt
-```
 
-Formats the Go code according to Go standards.
-
-### Clean up
-
-```sh
+# Clean build artifacts
 make clean
 ```
 
-Removes any binaries generated during the build process.
+### Docker Build
 
-### Help
+The Dockerfile uses multi-stage builds with distroless base images for minimal size (<10MB per service):
 
-```sh
-make help
+```bash
+docker build --build-arg SERVICE=posts --build-arg PORT=8080 -t hornet-posts .
+docker build --build-arg SERVICE=followers --build-arg PORT=8081 -t hornet-followers .
 ```
 
-Displays help information for all available `make` commands and variables.
+## Configuration
 
+### Posts Service
 
-## Environment Variables
+| Variable | Description | Default | Required |
+|----------|-------------|---------|----------|
+| `POSTS_PORT` | HTTP server port | `8080` | No |
+| `MONGO_URI` | MongoDB connection string | - | Yes |
+| `MONGO_DB` | MongoDB database name | - | Yes |
+| `FOLLOWERS_SERVICE_URL` | Followers service endpoint | - | Yes |
 
+### Followers Service
 
-| Variable Name        | Description                          | Default Value | Required |
-|----------------------|--------------------------------------|---------------|----------|
-| `POSTS_PORT`               | The port on which the posts server runs    | `8080`        | No       |
-| `FOLLOWERS_PORT`               | The port on which the followers server runs    | `8080`        | No       |
-| `MONGO_URI`       | URI for the MongoDB database      | -             | Yes      |
-| `MONGO_DB`       | The name the MongoDB database      | -             | Yes      |
-| `NEO4J_URI`           | URI for the Neo4j database | - | Yes       |
-| `NEO4J_DB`           | The name of Neo4j database | `neo4j` | Yes       |
-| `NEO4J_USER`           | User for the Neo4j database | - | Yes       |
-| `NEO4J_PASSWORD`           | The password of Neo4j database | - | Yes       |
-| `FOLLOWERS_SERVICE_URL`           | Followers service url | `- | Yes       |
-| `POSTS_SERVICE_URL`           | Posts service url | `- | Yes       |
-| `FLASK_PORT`           | Flask app port | - | No       |
+| Variable | Description | Default | Required |
+|----------|-------------|---------|----------|
+| `FOLLOWERS_PORT` | HTTP server port | `8080` | No |
+| `NEO4J_URI` | Neo4j connection string | - | Yes |
+| `NEO4J_DB` | Neo4j database name | `neo4j` | Yes |
+| `NEO4J_USER` | Neo4j username | - | Yes |
+| `NEO4J_PASSWORD` | Neo4j password | - | Yes |
+| `POSTS_SERVICE_URL` | Posts service endpoint | - | Yes |
+
+### Example `.env`
+
+```bash
+# Posts Service
+POSTS_PORT=8080
+MONGO_URI=mongodb://localhost:27017
+MONGO_DB=hornet
+FOLLOWERS_SERVICE_URL=http://followers-service:8081
+
+# Followers Service
+FOLLOWERS_PORT=8081
+NEO4J_URI=bolt://localhost:7687
+NEO4J_DB=neo4j
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=password
+POSTS_SERVICE_URL=http://posts-service:8080
+```
+
+## Development
+
+### Makefile Targets
+
+```bash
+make build SERVICE=<service>           # Build binary
+make build-container SERVICE=<service> # Build Docker image
+make run SERVICE=<service>             # Run service locally
+make lint                              # Run golangci-lint
+make fmt                               # Format code
+make clean                             # Remove binaries
+make help                              # Show all commands
+```
+
+### API Documentation
+
+OpenAPI specifications available in `api/openapi/`:
+- `posts.json` - Posts Service API spec
+- `followers.json` - Followers Service API spec
+
+## Deployment
+
+### Kubernetes + Istio
+
+Services are designed to run in Kubernetes with Istio service mesh:
+
+```yaml
+# Example deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: posts-service
+spec:
+  replicas: 3
+  template:
+    spec:
+      containers:
+      - name: posts
+        image: hornet-posts:latest
+        env:
+        - name: MONGO_URI
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: uri
+```
+
+Istio handles:
+- mTLS between services
+- JWT authentication via Keycloak
+- Load balancing and retries
+- Traffic management
